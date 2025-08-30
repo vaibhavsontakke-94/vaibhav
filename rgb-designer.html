@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RGB Color Designer</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; }
+        .container { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+        .controls { background: #f5f5f5; padding: 20px; border-radius: 8px; }
+        .preview { background: #fff; padding: 20px; border-radius: 8px; border: 1px solid #ddd; }
+        .slider-group { margin: 15px 0; }
+        label { display: block; margin-bottom: 5px; font-weight: bold; }
+        input[type="range"] { width: 100%; margin: 5px 0; }
+        .color-display { width: 100%; height: 150px; border: 2px solid #333; border-radius: 8px; margin: 10px 0; }
+        .color-info { background: #e9e9e9; padding: 10px; border-radius: 4px; margin: 10px 0; }
+        .preset-colors { display: flex; gap: 10px; margin: 15px 0; }
+        .preset { width: 40px; height: 40px; border: 2px solid #333; border-radius: 4px; cursor: pointer; }
+        button { padding: 8px 16px; margin: 5px; border: none; border-radius: 4px; cursor: pointer; background: #007bff; color: white; }
+        button:hover { background: #0056b3; }
+        .random-btn { background: #28a745; }
+        .random-btn:hover { background: #1e7e34; }
+    </style>
+</head>
+<body>
+    <h1>RGB Color Designer</h1>
+    
+    <div class="container">
+        <div class="controls">
+            <h3>Color Controls</h3>
+            
+            <div class="slider-group">
+                <label for="red">Red: <span id="redValue">128</span></label>
+                <input type="range" id="red" min="0" max="255" value="128">
+            </div>
+            
+            <div class="slider-group">
+                <label for="green">Green: <span id="greenValue">128</span></label>
+                <input type="range" id="green" min="0" max="255" value="128">
+            </div>
+            
+            <div class="slider-group">
+                <label for="blue">Blue: <span id="blueValue">128</span></label>
+                <input type="range" id="blue" min="0" max="255" value="128">
+            </div>
+            
+            <button onclick="randomColor()" class="random-btn">Random Color</button>
+            <button onclick="resetColor()">Reset</button>
+            <button onclick="copyColor()">Copy RGB</button>
+            
+            <h4>Preset Colors</h4>
+            <div class="preset-colors">
+                <div class="preset" style="background: rgb(255,0,0)" onclick="setColor(255,0,0)"></div>
+                <div class="preset" style="background: rgb(0,255,0)" onclick="setColor(0,255,0)"></div>
+                <div class="preset" style="background: rgb(0,0,255)" onclick="setColor(0,0,255)"></div>
+                <div class="preset" style="background: rgb(255,255,0)" onclick="setColor(255,255,0)"></div>
+                <div class="preset" style="background: rgb(255,0,255)" onclick="setColor(255,0,255)"></div>
+                <div class="preset" style="background: rgb(0,255,255)" onclick="setColor(0,255,255)"></div>
+            </div>
+        </div>
+        
+        <div class="preview">
+            <h3>Color Preview</h3>
+            <div id="colorDisplay" class="color-display"></div>
+            
+            <div class="color-info">
+                <strong>RGB:</strong> <span id="rgbValue">rgb(128, 128, 128)</span><br>
+                <strong>HEX:</strong> <span id="hexValue">#808080</span><br>
+                <strong>HSL:</strong> <span id="hslValue">hsl(0, 0%, 50%)</span>
+            </div>
+            
+            <h4>Color Variations</h4>
+            <div id="variations" style="display: flex; gap: 10px; margin: 10px 0;">
+                <div style="width: 50px; height: 50px; border: 1px solid #333;" id="lighter"></div>
+                <div style="width: 50px; height: 50px; border: 1px solid #333;" id="darker"></div>
+                <div style="width: 50px; height: 50px; border: 1px solid #333;" id="complement"></div>
+            </div>
+            <small>Lighter | Darker | Complement</small>
+        </div>
+    </div>
+
+    <script>
+        function updateColor() {
+            const r = parseInt(document.getElementById('red').value);
+            const g = parseInt(document.getElementById('green').value);
+            const b = parseInt(document.getElementById('blue').value);
+            
+            document.getElementById('redValue').textContent = r;
+            document.getElementById('greenValue').textContent = g;
+            document.getElementById('blueValue').textContent = b;
+            
+            const rgb = `rgb(${r}, ${g}, ${b})`;
+            const hex = rgbToHex(r, g, b);
+            const hsl = rgbToHsl(r, g, b);
+            
+            document.getElementById('colorDisplay').style.backgroundColor = rgb;
+            document.getElementById('rgbValue').textContent = rgb;
+            document.getElementById('hexValue').textContent = hex;
+            document.getElementById('hslValue').textContent = hsl;
+            
+            updateVariations(r, g, b);
+        }
+        
+        function rgbToHex(r, g, b) {
+            return "#" + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1);
+        }
+        
+        function rgbToHsl(r, g, b) {
+            r /= 255; g /= 255; b /= 255;
+            const max = Math.max(r, g, b), min = Math.min(r, g, b);
+            let h, s, l = (max + min) / 2;
+            
+            if (max === min) {
+                h = s = 0;
+            } else {
+                const d = max - min;
+                s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+                switch (max) {
+                    case r: h = (g - b) / d + (g < b ? 6 : 0); break;
+                    case g: h = (b - r) / d + 2; break;
+                    case b: h = (r - g) / d + 4; break;
+                }
+                h /= 6;
+            }
+            
+            return `hsl(${Math.round(h * 360)}, ${Math.round(s * 100)}%, ${Math.round(l * 100)}%)`;
+        }
+        
+        function updateVariations(r, g, b) {
+            document.getElementById('lighter').style.backgroundColor = 
+                `rgb(${Math.min(255, r + 50)}, ${Math.min(255, g + 50)}, ${Math.min(255, b + 50)})`;
+            document.getElementById('darker').style.backgroundColor = 
+                `rgb(${Math.max(0, r - 50)}, ${Math.max(0, g - 50)}, ${Math.max(0, b - 50)})`;
+            document.getElementById('complement').style.backgroundColor = 
+                `rgb(${255 - r}, ${255 - g}, ${255 - b})`;
+        }
+        
+        function setColor(r, g, b) {
+            document.getElementById('red').value = r;
+            document.getElementById('green').value = g;
+            document.getElementById('blue').value = b;
+            updateColor();
+        }
+        
+        function randomColor() {
+            const r = Math.floor(Math.random() * 256);
+            const g = Math.floor(Math.random() * 256);
+            const b = Math.floor(Math.random() * 256);
+            setColor(r, g, b);
+        }
+        
+        function resetColor() {
+            setColor(128, 128, 128);
+        }
+        
+        function copyColor() {
+            const rgb = document.getElementById('rgbValue').textContent;
+            navigator.clipboard.writeText(rgb).then(() => {
+                alert('RGB value copied to clipboard!');
+            });
+        }
+        
+        document.getElementById('red').addEventListener('input', updateColor);
+        document.getElementById('green').addEventListener('input', updateColor);
+        document.getElementById('blue').addEventListener('input', updateColor);
+        
+        updateColor();
+    </script>
+</body>
+</html>
